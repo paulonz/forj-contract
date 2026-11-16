@@ -1,0 +1,18 @@
+# Exemplo INVÁLIDO de forj.yaml
+#
+# Campo obrigatório `repoUrl` está faltando de propósito, para demonstrar que
+# o validador rejeita com um erro específico (não um erro genérico de parse).
+
+forjVersion: "1.0.0"
+name: relatorios
+
+routes:
+  - path: /health
+    publica: true
+  - path: /relatorios/:id
+
+requiredJwtClaims:
+  - tenant_id
+
+appDependencies: []
+uiPlugins: []

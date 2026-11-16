@@ -1,0 +1,29 @@
+# Exemplo VÁLIDO de forj.yaml — microapp fictício "relatorios"
+#
+# Todos os campos obrigatórios estão preenchidos (forjVersion, name, repoUrl).
+# Inclui uma rota COM `publica: true` (/health) e uma rota SEM o campo `publica`
+# (/relatorios/:id) para demonstrar o cenário de fail-safe default (ausência de
+# `publica` deve resolver para `false` / protegida).
+
+forjVersion: "1.0.0"
+name: relatorios
+repoUrl: https://github.com/parceiro-exemplo/relatorios
+
+routes:
+  - path: /health
+    publica: true
+  - path: /relatorios
+    publica: false
+  - path: /relatorios/:id
+    # campo `publica` intencionalmente omitido aqui —
+    # deve ser tratado como protegida (publica: false) pelo fail-safe default
+
+requiredJwtClaims:
+  - tenant_id
+  - roles
+  - is_tenant_admin
+
+appDependencies:
+  - vendas
+
+uiPlugins: []

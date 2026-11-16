@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/paulonz/forj-contract/schema/forj.schema.json",
+  "title": "Forj App Manifest (forj.yaml)",
+  "description": "Meta-schema (structural contract) for the forj.yaml microapp manifest. This is the 'manifesto do app' — distinct from Kubernetes manifests (forj-deployments repo). See README.md for the full field-by-field reference and explicit scope boundaries.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "forjVersion",
+    "name",
+    "repoUrl"
+  ],
+  "properties": {
+    "forjVersion": {
+      "type": "string",
+      "description": "Contract version this manifest was written against. REQUIRED and TYPED here only. This schema intentionally does NOT use `const`/`enum` to pin a single accepted value: hardcoding the current supported version in the schema would require a schema edit (and a new forj-contract release) every time the platform bumps the supported version, even though the schema SHAPE for this field never changes. The runtime policy of 'only the latest version is accepted, reject anything older/newer' is enforced by f4-02 (the registration API) at registration time, NOT by this schema. See README 'Boundary notes'.",
+      "minLength": 1,
+      "examples": ["1.0.0", "1"]
+    },
+    "name": {
+      "type": "string",
+      "description": "App name/slug. Must be a URL-safe, lowercase, hyphenated slug — used as the microapp identifier across the platform (routing path segment, Deployment name suffix forj-app-<name>, etc).",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 63,
+      "examples": ["relatorios", "vendas"]
+    },
+    "repoUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Source repository URL for this microapp. Required so the registration API (f4-02) and the SAST/dependency gate (f4-05) know where to fetch the code and package.json/lockfile to scan. This schema does not and cannot verify the repo is reachable or that credentials exist — that is a runtime concern of the consumers, not a structural concern of this schema.",
+      "examples": ["https://github.com/parceiro/meu-app"]
+    },
+    "routes": {
+      "type": "array",
+      "description": "Static registry of exposed route surface, consumed by the gateway/Traefik (Fase 2) to know which paths exist and must be routed, and by the tenant-isolation fuzz gate (f4-04) to know which routes to skip. Does NOT describe per-screen runtime behavior or hypermedia workflow (that is decided by each API response, f3-07) — only declares 'this route exists'.",
+      "items": { "$ref": "#/definitions/route" },
+      "default": []
+    },
+    "requiredJwtClaims": {
+      "type": "array",
+      "description": "List of JWT claim names this microapp expects to consume (e.g. tenant_id, roles). This schema ONLY validates that the field is an array of strings — it does NOT validate the claim names against the real whitelist emitted by the auth service (tenant_id, partner_id, apps, roles, is_tenant_admin, tier). That value-level whitelist validation is f4-05's job, explicitly out of scope here.",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    },
+    "appDependencies": {
+      "type": "array",
+      "description": "List of OTHER MICROAPP SLUGS (Forj apps/services) this app depends on to function (e.g. a 'relatorios' app that depends on the 'vendas' app existing). This is explicitly NOT a list of npm package names — npm/package.json dependencies are read from the repo pointed to by repoUrl and scanned by f4-05. Do not confuse the two 'dependency' concepts.",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    },
+    "uiPlugins": {
+      "type": "array",
+      "description": "Reserved, forward-compatible placeholder for custom-UI plugin references (the Fase 3 escape hatch, f3-08 — now closed/merged). Conceptually, an entry here would map to a Module Federation remote name, but this schema intentionally does NOT hard-code f3-08's internal shape: f4-07 (the gate that will actually consume/validate this field) has not been designed yet. Kept generic/extensible (array of arbitrary objects) to avoid forcing a breaking schema change when f4-07 lands.",
+      "items": {},
+      "default": []
+    }
+  },
+  "definitions": {
+    "route": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Static route path surface registered for the gateway (e.g. /produtos, /produtos/:id).",
+          "minLength": 1,
+          "examples": ["/produtos", "/produtos/:id", "/health"]
+        },
+        "publica": {
+          "type": "boolean",
+          "description": "Whether this route is public (skips auth / is skipped by the tenant-isolation fuzz gate f4-04), e.g. /health, /.well-known/*. Fail-safe default: false when omitted — a route without this field is treated as PROTECTED. NOTE: JSON Schema's `default` keyword is documentation-only for most validators (including Ajv without useDefaults) — it does not by itself inject the value into parsed data. See README 'Applying the publica default in practice' for the `route.publica ?? false` pattern / Ajv `useDefaults` option that actually makes this fail-safe behavior happen in consumer code.",
+          "default": false
+        }
+      }
+    }
+  }
+}

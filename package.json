@@ -1,0 +1,15 @@
+{
+  "name": "forj-contract",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Forj platform — microapp manifest (forj.yaml) contract schema",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "js-yaml": "^4.1.0"
+  }
+}
