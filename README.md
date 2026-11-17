@@ -111,6 +111,24 @@ invalid-forj.yaml correctly rejected: true
 - Normalização de URLs web de provedor Git (ex.: converter automaticamente `/tree/...` em clone URL) — fora de escopo. O contrato correto é `repoUrl` cloneável + `repoSubdir` opcional.
 - Forma interna definitiva de `uiPlugins` (aguardando f4-07).
 
+## Formato Siren (ações hypermedia) — o que seu microapp deve retornar
+
+Este campo não faz parte do `forj.yaml` (que é só o manifesto estático de rotas/claims/dependências), mas é o contrato **em runtime** que sua API deve seguir nas respostas que expõem estado de workflow — mesma descrição usada na skill de construção de microapp (`skills/forj-microapp-builder/SKILL.md`, seção 3, repositório `paulonz/forj`), reaproveitada aqui para não divergir entre as duas fontes.
+
+Toda resposta que expõe estado de workflow inclui um array `actions[]`; cada ação tem `name`, `href`, `method` e `fields` (array, vazio quando a ação não exige formulário). `href`/`method` são usados **literalmente** por quem consome a resposta — nunca são reconstruídos ou adivinhados a partir de outra informação.
+
+Exemplo técnico (formato das ações, não um payload completo de recurso):
+
+```json
+{
+  "actions": [
+    { "name": "iniciar", "href": "/tarefas/123/iniciar", "method": "POST", "fields": [] }
+  ]
+}
+```
+
+Regras: ação indisponível no estado atual responde **409** e não aparece em `actions[]`; estado terminal = array `actions` sempre vazio; `fields: []` (array vazio, não ausente) é a convenção para "ação one-click sem formulário".
+
 ## Para partners/devs: como usar este repositório
 
 1. Leia `schema/forj.schema.json` e este README para entender cada campo.
