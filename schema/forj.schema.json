@@ -28,8 +28,14 @@
     "repoUrl": {
       "type": "string",
       "format": "uri",
-      "description": "Source repository URL for this microapp. Required so the registration API (f4-02) and the SAST/dependency gate (f4-05) know where to fetch the code and package.json/lockfile to scan. This schema does not and cannot verify the repo is reachable or that credentials exist — that is a runtime concern of the consumers, not a structural concern of this schema.",
+      "description": "Source repository URL for this microapp. Required so the registration API (f4-02) and the SAST/dependency gate (f4-05) know where to fetch the code and package.json/lockfile to scan. This field MUST point to a cloneable repository root (not to a GitHub /tree/... page). When the app lives inside a monorepo subdirectory, keep `repoUrl` at the repo root and declare the subpath separately in `repoSubdir`. This schema does not and cannot verify the repo is reachable or that credentials exist — that is a runtime concern of the consumers, not a structural concern of this schema.",
       "examples": ["https://github.com/parceiro/meu-app"]
+    },
+    "repoSubdir": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional path INSIDE the repository declared by `repoUrl` where this microapp actually lives (forj.yaml, package.json, Dockerfile, source code). Use this when the app is stored in a monorepo subdirectory, e.g. `apps/tarefas`. Omit it when the microapp lives at the repository root.",
+      "examples": ["apps/tarefas", "services/relatorios"]
     },
     "routes": {
       "type": "array",

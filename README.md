@@ -25,7 +25,8 @@ Ver também `paulonz/forj/README.md` (seção "Fluxo de construção, deploy e v
 |---|---|---|---|---|
 | `forjVersion` | `string` | ✅ | Versão do contrato que este manifesto segue. | **Este schema NÃO usa `const`/`enum` para travar num único valor aceito.** Fazer isso exigiria editar o schema (e publicar uma nova versão deste repo) a cada bump de versão suportada, mesmo que o *formato* do campo nunca mude. A política "só a versão mais recente é aceita, rejeita desatualizado" é enforcement em **runtime**, feito por **f4-02** (API de registro) — não por este schema. |
 | `name` | `string` | ✅ | Nome/slug do app. Regex `^[a-z0-9]+(-[a-z0-9]+)*$` (minúsculas, números, hífen). | Usado como identificador do microapp na plataforma (path de rota, nome do Deployment `forj-app-<name>`, etc). |
-| `repoUrl` | `string` (`format: uri`) | ✅ | URL do repositório fonte do microapp. | Permite a f4-02 (registro) e f4-05 (SAST/scan de dependências) localizarem o código e o `package.json`/lockfile. |
+| `repoUrl` | `string` (`format: uri`) | ✅ | URL do repositório fonte do microapp. | Deve apontar para um repositório CLONÁVEL (raiz do repo, não página `/tree/...`). Permite a f4-02 (registro) e f4-05 (SAST/scan de dependências) localizarem o código e o `package.json`/lockfile. |
+| `repoSubdir` | `string` | opcional | Subcaminho DENTRO do repositório apontado por `repoUrl` onde o microapp vive. | Use quando o app estiver num monorepo (ex.: `apps/tarefas`). Omitir significa "o microapp está na raiz do repo". |
 | `routes` | `array<object>` | opcional (default `[]`) | Registro estático de rotas expostas, cada uma com `path` (obrigatório) e `publica` (booleano). | Ver seção "Default de `publica`" abaixo — **importante**. Não descreve workflow hypermedia em runtime (isso é decidido pela API a cada resposta, f3-07). |
 | `requiredJwtClaims` | `array<string>` | opcional (default `[]`) | Claims JWT que o microapp espera consumir (ex: `tenant_id`, `roles`). | **Este schema só valida que é uma lista de strings.** NÃO valida os valores contra a whitelist real de claims emitidas pelo auth (`tenant_id`, `partner_id`, `apps`, `roles`, `is_tenant_admin`, `tier`) — essa validação de **valor** é job de **f4-05**, fora de escopo aqui. |
 | `appDependencies` | `array<string>` | opcional (default `[]`) | Slugs de **outros microapps Forj** dos quais este depende para funcionar (ex: `vendas`). | **NÃO é lista de pacotes npm.** Dependências npm vêm do `package.json`/lockfile do repositório apontado por `repoUrl`, escaneadas por f4-05. Os dois conceitos usam a palavra "dependência" mas são coisas diferentes — não confundir. |
@@ -50,6 +51,7 @@ Qualquer consumidor futuro deste schema (f4-02, f4-04) deve escolher uma das dua
 - `examples/valid-forj.yaml` — microapp fictício "relatorios", todos os campos obrigatórios preenchidos. Inclui:
   - uma rota com `publica: true` (`/health`)
   - uma rota **sem** o campo `publica` (`/relatorios/:id`) — demonstra o cenário de fail-safe default
+- `repoSubdir` é opcional e fica ausente no exemplo válido porque ele representa o caso simples: microapp na raiz do próprio repositório. Em monorepo, use `repoUrl` para a raiz cloneável do repo e `repoSubdir` para o caminho interno do app.
 - `examples/invalid-forj.yaml` — falta o campo obrigatório `repoUrl` de propósito, para demonstrar que o validador rejeita com um erro específico (não um erro genérico de parse).
 
 ## Como rodar o validador localmente
@@ -106,6 +108,7 @@ invalid-forj.yaml correctly rejected: true
 - Suporte formal a múltiplas versões coexistentes de `forjVersion` — só quando houver demanda real de um partner (issue futura).
 - API de registro em si (f4-02) — este repositório só contém o contrato/schema, não o serviço que o consome.
 - Gate de SAST/dependências (f4-05) — consome `repoUrl`, mas vive em outro lugar.
+- Normalização de URLs web de provedor Git (ex.: converter automaticamente `/tree/...` em clone URL) — fora de escopo. O contrato correto é `repoUrl` cloneável + `repoSubdir` opcional.
 - Forma interna definitiva de `uiPlugins` (aguardando f4-07).
 
 ## Para partners/devs: como usar este repositório
