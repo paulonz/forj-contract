@@ -4,6 +4,16 @@
   "private": true,
   "description": "Forj platform — microapp manifest (forj.yaml) contract schema",
   "type": "module",
+  "main": "./src/index.mjs",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs",
+      "default": "./src/index.mjs"
+    },
+    "./schema/forj.schema.json": "./schema/forj.schema.json"
+  },
   "scripts": {
     "validate": "node scripts/validate.mjs"
   },
